@@ -18,18 +18,20 @@ export default function ProfilePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const fetchUserTours = async () => {
       if (!user) return;
 
       try {
-        const res = await fetch(`http://localhost:5000/api/tours/user/${user.id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/tours/user/${user.id}`);
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
         setTours(data);
       } catch (error) {
         console.error("Failed to fetch user tours:", error);
+        setMessage("Error fetching tours.");
       }
     };
 
@@ -38,12 +40,14 @@ export default function ProfilePage() {
 
   const handleDelete = async (tourId: string) => {
     try {
-      await fetch(`http://localhost:5000/api/tours/${tourId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/tours/${tourId}`, {
         method: "DELETE",
       });
       setTours((prev) => prev.filter((tour) => tour._id !== tourId));
+      setMessage("Tour deleted successfully.");
     } catch (err) {
       console.error("Failed to delete tour:", err);
+      setMessage("Failed to delete tour.");
     }
   };
 
@@ -51,11 +55,12 @@ export default function ProfilePage() {
     setEditingId(tour._id);
     setEditTitle(tour.title);
     setEditDescription(tour.description);
+    setMessage("");
   };
 
   const handleUpdate = async (tourId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tours/${tourId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/tours/${tourId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -68,15 +73,25 @@ export default function ProfilePage() {
 
       if (!res.ok) throw new Error("Failed to update");
 
-      // Update frontend state
       setTours((prev) =>
         prev.map((t) =>
           t._id === tourId ? { ...t, title: editTitle, description: editDescription } : t
         )
       );
       setEditingId(null);
+      setMessage("Tour updated successfully.");
     } catch (err) {
       console.error("Update failed:", err);
+      setMessage("Failed to update tour.");
+    }
+  };
+
+  const handleCopyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setMessage("Sharable link copied!");
+    } catch {
+      setMessage("Failed to copy link.");
     }
   };
 
@@ -87,7 +102,15 @@ export default function ProfilePage() {
         Logged in as: <strong>{user?.fullName || user?.emailAddresses[0]?.emailAddress}</strong>
       </p>
 
-      {tours.length === 0 ? (
+      {message && (
+        <div className="mb-4 px-4 py-2 bg-blue-100 text-blue-800 rounded text-sm">
+          {message}
+        </div>
+      )}
+
+      {!user ? (
+        <p>Loading user...</p>
+      ) : tours.length === 0 ? (
         <p>No tours uploaded yet.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -110,8 +133,9 @@ export default function ProfilePage() {
                   />
                   <div className="flex justify-between text-sm mt-2">
                     <button
-                      className="text-green-600 hover:underline"
+                      className="text-green-600 hover:underline disabled:text-gray-400"
                       onClick={() => handleUpdate(tour._id)}
+                      disabled={!editTitle.trim() || !editDescription.trim()}
                     >
                       Save
                     </button>
@@ -133,37 +157,42 @@ export default function ProfilePage() {
                       src={tour.url}
                       alt="tour media"
                       className="w-full aspect-video object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.src = "/fallback.jpg"; // optional fallback
+                      }}
                     />
                   ) : (
                     <video
                       src={tour.url}
                       controls
                       className="w-full aspect-video object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.poster = "/fallback.jpg";
+                      }}
                     />
                   )}
 
-                  <div className="flex justify-between text-sm mt-2">
+                  <div className="flex flex-col gap-1 mt-3 text-sm">
+                    <div className="flex justify-between">
+                      <button
+                        className="text-blue-600 hover:underline"
+                        onClick={() => startEditing(tour)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-red-600 hover:underline"
+                        onClick={() => handleDelete(tour._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                     <button
-                      className="text-blue-600 hover:underline"
-                      onClick={() => startEditing(tour)}
+                      className="text-indigo-600 hover:underline"
+                      onClick={() => handleCopyLink(tour.url)}
                     >
-                      Edit
+                      Copy Sharable Link
                     </button>
-                    <button
-                      className="text-red-600 hover:underline"
-                      onClick={() => handleDelete(tour._id)}
-                    >
-                      Delete
-                    </button>
-                    <button
-  className="text-sm text-indigo-600 hover:underline mt-1"
-  onClick={() => {
-    navigator.clipboard.writeText(tour.url);
-    alert("Sharable link copied!");
-  }}
->
-  Copy Sharable Link
-</button>
                   </div>
                 </>
               )}

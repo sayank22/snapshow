@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 export default function CreateTourModal({
   isOpen,
@@ -24,7 +25,7 @@ export default function CreateTourModal({
 
   const handleUpload = async () => {
     if (!media || !title.trim() || !description.trim() || !user) {
-      alert("Please fill in all fields and select a file.");
+      toast.warning("Please fill in all fields and select a file.");
       return;
     }
 
@@ -36,7 +37,7 @@ export default function CreateTourModal({
     formData.append("userId", user.id);
 
     try {
-      const res = await fetch("http://localhost:5000/api/tours", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/tours`, {
         method: "POST",
         body: formData,
       });
@@ -44,15 +45,19 @@ export default function CreateTourModal({
       if (!res.ok) throw new Error("Upload failed");
 
       const data = await res.json();
-      console.log("Uploaded:", data);
-      alert("Tour created and uploaded successfully!\nSharable link: " + window.location.origin + "/tour/" + data._id);
-      onClose(); // Close modal after successful upload
+
+      toast.success("Tour uploaded successfully!");
+      toast.info("Sharable link copied to clipboard");
+
+      navigator.clipboard.writeText(`${window.location.origin}/tour/${data._id}`);
+
+      onClose(); // Close modal
       setMedia(null);
       setTitle("");
       setDescription("");
     } catch (err) {
       console.error("Upload failed:", err);
-      alert("Upload failed. Try again.");
+      toast.error("Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
