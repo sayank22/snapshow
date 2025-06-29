@@ -1,5 +1,4 @@
 import Link from "next/link";
-import about from "../app/about"
 
 export default function Footer() {
   return (

@@ -16,7 +16,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/tours");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/tours`);
         const data = await res.json();
         setTours(data);
       } catch (err) {
