@@ -1,10 +1,13 @@
 # Node modules
 /node_modules/
 
-# Build output
+# Next.js build output
 /.next/
-/out/
-/dist/
+out/
+dist/
+
+# TypeScript build support
+!.next-env.d.ts
 
 # Logs
 npm-debug.log*
@@ -12,15 +15,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Env files
+# Env files (private keys, secrets)
 .env
 .env.local
 .env.*.local
 
-# Mac system files
+# System
 .DS_Store
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.suo
@@ -28,13 +31,11 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 
-# npm cache
-.npm
-
-# Optional npm/yarn files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Package manager files — only keep one
+# Keep your lock file for consistent installs
+# Uncomment based on what you're using
+# yarn.lock
+# pnpm-lock.yaml
 
 # Test coverage
 coverage/
